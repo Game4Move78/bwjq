@@ -57,3 +57,4 @@ All the jq functions used are in `bwjq_utils.jq`. If you want to experiment with
 [bw](https://bitwarden.com/help/cli/)
 [bw serve](https://bitwarden.com/help/bitwarden-apis/#vault-management-api)
 [jq](https://jqlang.org/manual/)
+[rbw](https://github.com/doy/rbw/)
