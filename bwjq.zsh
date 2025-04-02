@@ -29,7 +29,7 @@ bwjq_script() {
   cat \
     <(bwjq_request GET '/list/object/folders') \
     <(bwjq_request GET '/list/object/items') \
-    | bwjq_jq \
+    | bwjq_jq -L $BWJQ_PATH \
         -nceM \
         --stream \
         -f "$script" \
@@ -154,6 +154,7 @@ alias bwgu='bwjq_generate -uln'
 
 export BWJQ_BWJQ="${0:h}/bwjq_new.jq"
 export BWJQ_LIST="${0:h}/bwjq_list.jq"
+export BWJQ_PATH="${0:h}"
 
 export BWJQ_JQ='jq'
 export BWJQ_QRENCODE='qrencode -t UTF8'
