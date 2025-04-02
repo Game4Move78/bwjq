@@ -24,3 +24,9 @@ The following should be installed and on your PATH
         bwjq
     )
     ```
+
+## Zsh
+
+```sh
+source bwjq.zsh
+```
