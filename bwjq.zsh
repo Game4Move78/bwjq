@@ -23,38 +23,48 @@
 
 source "${0:h}/base.zsh"
 
-bwjq_bwjq_candidates() {
-
-  local -a \
-        karg \
-        carg \
-        rarg \
-        earg \
-        aarg \
-
-  zparseopts -D -K -E -- \
-             {k,-key}=karg \
-             {c,-complete}=carg \
-             {r,-recursive}=rarg \
-             {e,-expand}=earg \
-             {a,-all}=aarg \
-    || return
-
-  bwjq_unlock || return $?
-
-  prefix="$1"
+bwjq_script() {
+  local script="$1"
+  shift
   cat \
     <(bwjq_request GET '/list/object/folders') \
     <(bwjq_request GET '/list/object/items') \
     | bwjq_jq \
-        -nrcM \
+        -nceM \
         --stream \
-        --arg key "${karg[1]}" \
-        --arg complete "${carg[1]}" \
-        --arg recursive "${rarg[1]}" \
-        --arg expand "${earg[1]}" \
-        --arg all "${aarg[1]}" \
-        --arg prefix "$prefix" -f "${BWJQ_BWJQ}"
+        -f "$script" \
+        "$@"
+}
+
+bwjq_candidates() {
+
+  local -a \
+        opt_key \
+        opt_greedy \
+        opt_recursive \
+        opt_exp \
+        opt_all \
+
+        zparseopts -D -K -E -- \
+          {k,-key}=opt_key \
+          {g,-greedy}=opt_greedy \
+          {r,-recursive}=opt_recursive \
+          {e,-expand}=opt_exp \
+          {a,-all}=opt_all \
+          || return
+
+  bwjq_unlock || return $?
+
+  prefix="$1"
+  bwjq_script \
+    "${BWJQ_BWJQ}" \
+    -r \
+    --arg key "${opt_key[1]}" \
+    --arg greedy "${opt_greedy[1]}" \
+    --arg recursive "${opt_recursive[1]}" \
+    --arg expand "${opt_exp[1]}" \
+    --arg all "${opt_all[1]}" \
+    --arg prefix "$prefix"
 }
 
 _bwjq_bwjq() {
@@ -62,7 +72,7 @@ _bwjq_bwjq() {
   cur="${words[CURRENT]}"
   local -a opts
 
-  opts=("${(@f)$(bwjq_bwjq_candidates ${(Q)cur})}")
+  opts=("${(@f)$(bwjq_candidates ${(Q)cur})}")
   compadd -S '' -- "${opts[@]}"
 }
 
@@ -77,40 +87,64 @@ bwjq_fzf() {
 
 bwjq_bwjq() {
   local -a \
-        carg \
-        qrarg \
-        fzfarg
+        opt_clip \
+        opt_qr \
+        opt_fzf
 
   zparseopts -D -K -E -- \
-             {c,-clipboard}=carg \
-             {q,-qrcode}=qrarg \
-             -fzf=fzfarg \
+             {c,-clip}=opt_clip \
+             {q,-qr}=opt_qr \
+             {f,-fzf}=opt_fzf \
     || return
 
   local -a bwjq_args
 
-  if [[ ${#fzfarg} -ne 0 ]]; then
+  if [[ ${#opt_fzf} -ne 0 ]]; then
     bwjq_args+=("--expand" "--all")
   fi
 
-  bwjq_bwjq_candidates "${bwjq_args[@]}" -c -r -k "$@" \
-  | {
+  bwjq_candidates "${bwjq_args[@]}" -g -r -k "$@" \
+    | {
     local key
     read -r key
     if [[ "$key" == "value" ]]; then
-      bwjq_display "${carg[@]}" "${qarg[@]}"
+      bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
     elif [[ "$key" == "tree" ]]; then
       tree --fromfile --noreport .
     elif [[ "$key" == "tsv" ]]; then
-      bwjq_fzf | bwjq_display "${carg[@]}" "${qarg[@]}"
+      bwjq_fzf | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
     fi
   }
 
 }
 
+bwjq_list() {
+  local -a \
+        opt_clip \
+        opt_qr
+
+  zparseopts -D -K -E -- \
+             {c,-clip}=opt_clip \
+             {q,-qr}=opt_qr \
+    || return
+
+  prefix="$1"
+
+  bwjq_unlock || return $?
+
+  bwjq_script \
+    "${BWJQ_LIST}" \
+    -r \
+    --arg prefix "$prefix" \
+  | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
+
+}
+
 compdef _bwjq_bwjq bwjq_bwjq
+compdef _bwjq_bwjq bwjq_list
 
 alias bwjq='bwjq_bwjq'
+alias bwls='bwjq_list'
 alias bwst='bwjq_status'
 alias bwsn='bwjq_sync'
 alias bwul='bwjq_unlock'
@@ -118,4 +152,15 @@ alias bwlk='bwjq_lock'
 alias bwgp='bwjq_generate -ulns'
 alias bwgu='bwjq_generate -uln'
 
-export BWJQ_BWJQ="${0:h}/bwjq.jq"
+export BWJQ_BWJQ="${0:h}/bwjq_new.jq"
+export BWJQ_LIST="${0:h}/bwjq_list.jq"
+
+export BWJQ_JQ='jq'
+export BWJQ_QRENCODE='qrencode -t UTF8'
+if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+  export BWJQ_COPY='clipcopy'
+elif [ "$(uname)" = "Darwin" ]; then
+  export BWJQ_COPY='pbcopy'
+else
+  export BWJQ_COPY='xclip -selection clipboard'
+fi

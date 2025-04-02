@@ -50,7 +50,6 @@ def entries($folder; $prefix; $item):
     | sub("/[^/]*$"; "/")
   ) as $item_name
   | ($prefix_folder + $item_name) as $prefix_name
-
   | (
     $prefix_name
     | select(startswith($prefix) and $prefix_name != $prefix)
@@ -66,11 +65,11 @@ def entries($folder; $prefix; $item):
      end
      | ($prefix | sub("/[^/]*$"; "/")) as $prefix_path
      | path_numeric($prefix | ltrimstr($prefix_name) | split("/")) as $path
-      | (if $path[-1] != "" then
-         getscalar($path)
-       else
-         null
-       end
+     | (if $path[-1] != "" then
+       getscalar($path)
+     else
+       null
+     end
        ) as $value
     | if $value != null then
         [$prefix_path, $value]
@@ -119,7 +118,7 @@ def entries($folder; $prefix; $item):
     | entries($folder; $prefix; $item)
 )
 ]
-| if (length == 1) and .[0][1] != null and $complete != "" then
+| if (length == 1) and .[0][1] != null and $greedy != "" then
   ("value" | select($key != "")), (.[0][1])
 elif $all != "" then
   (["tsv"] | select($key != "")), (.[] | select(.[1] != null) | [.[0], .[1]]) | @tsv

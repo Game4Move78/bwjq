@@ -7,29 +7,28 @@ See [INSTALL.md](INSTALL.md).
 
 ## Usage
 
-| Command                 | Description                 | Deps       |
-|-------------------------|-----------------------------|------------|
-| `bwul`                  | unlock the vault            |            |
-| `bwlk`                  | lock the vault              |            |
-| `bwst`                  | vault status                |            |
-| `bwsn`                  | sync the vault              |            |
-| `bwg`                   | alphanum + special password |            |
-| `bwgs`                  | alphanum password           |            |
-| `bwjq PATH`             | show value                  |            |
-| `bwjq --fzf PATH`       | search values               | `fzf`      |
-| `bwjq --clipboard PATH` | copy value to clipboard     |            |
-| `bwjq --qrcode PATH`    | print value as QR code      | `qrencode` |
+| Command        | Description             | Deps       |
+|----------------|-------------------------|------------|
+| `bwul`         | unlock the vault        |            |
+| `bwlk`         | lock the vault          |            |
+| `bwst`         | vault status            |            |
+| `bwsn`         | sync the vault          |            |
+| `bwgu`         | generate username       |            |
+| `bwgp`         | generate password       |            |
+| `bwjq PATH`    | show value              |            |
+| `bwjq -f PATH` | search values           | `fzf`      |
+| `bwjq -c PATH` | copy value to clipboard |            |
+| `bwjq -q PATH` | print value as QR code  | `qrencode` |
 
 ## Parameters
 
-PATH follow the format FOLDERNAME/ITEMNAME/VALUEPATH. This value supports tab autocompletions.
+PATH follows format FOLDERNAME/ITEMNAME/VALUEPATH. This value supports tab autocompletions.
 
 ## Customization
 
-Clipboard uses variable `BW_COPY`. Defaults to
-
-| MacOSX  | pbcopy   |
-| Wayland | clipcopy |
-| Else    | xclip    |
-
-jq executable found using variable `BW_JQ`. Can switch to other implementations (e.g. `export BW_JQ='gojq'`) but behaviour may differ.
+| Env Variable    | Description          | Examples            |
+|-----------------|----------------------|---------------------|
+| `BW_JQ`         | jq command           | `jq`, `gojq`        |
+| `BWJQ_BWJQ`     | jq script for `bwjq` | `./bwjq_new.jq`     |
+| `BWJQ_COPY`     | clipboard command    | `clipcopy`, `xclip` |
+| `BWJQ_QRENCODE` | qrencode command     | `./bwjq_new.jq`     |

@@ -31,9 +31,9 @@ _bwjq_pipefail() {
 }
 
 bwjq_eval() {
-  local cmd="$1"
+  local -a cmd=("${(z)1}")
   shift
-  eval "$cmd $(printf '%q ' "$@")"
+  "$cmd[@]" "$@"
 }
 
 bwjq_jq() {
@@ -41,7 +41,11 @@ bwjq_jq() {
 }
 
 bwjq_copy() {
-  bwjq_eval "${BWJQ_COPY:-cat | clipcopy}"
+  cat | bwjq_eval "${BWJQ_COPY:-clipcopy}"
+}
+
+bwjq_qrencode() {
+  bwjq_eval "${BWJQ_QRENCODE:-qrencode -t UTF8}"
 }
 
 bwjq_escape_jq() {
@@ -67,16 +71,16 @@ bwjq_request_params() {
 
 bwjq_request() {
 
-  local -a stdinarg
+  local -a opt_stdin
 
   zparseopts -D -K -E -- \
-             -stdin=stdinarg || return
+             -stdin=opt_stdin || return
 
   local method=$1 endpoint=$2 res
   local -a data_args
   local params=$(bwjq_request_params "${@:3}")
   # if ! [[ -t 0 ]]; then
-  if [[ ${#stdinarg[@]} -ne 0 ]]; then
+  if [[ ${#opt_stdin[@]} -ne 0 ]]; then
     data_args+=("-d" "$(</dev/stdin)")
   fi
 
@@ -87,22 +91,22 @@ bwjq_request() {
 }
 
 bwjq_request_path() {
-  local -a rarg narg stdinarg
+  local -a opt_raw narg opt_stdin
 
   zparseopts -D -K -E -- \
-             -stdin=stdinarg \
-             r=rarg || return
+             -stdin=opt_stdin \
+             r=opt_raw || return
 
   local method="$1" endpoint="$2" jqpath="$3" res exitcode
   local params_list=("${@:4}")
-  bwjq_request "${stdinarg[@]}" "$method" "$endpoint" "${params_list[@]}" \
-  | bwjq_jq "${rarg[@]}" -ceM "$jqpath"
+  bwjq_request "${opt_stdin[@]}" "$method" "$endpoint" "${params_list[@]}" \
+  | bwjq_jq "${opt_raw[@]}" -ceM "$jqpath"
   _bwjq_pipefail ${pipestatus[@]} || return $?
 }
 
 bwjq_status() {
   local res
-  res=$(bwjq_request_path -r GET '/status' '.template.status')
+  res=$(bwjq_request_path -r GET '/status' '.data.template.status')
   _bwjq_pipefail ${pipestatus[@]} || return $?
   printf "%s\n" "$res" >&2
   if [[ "$res" == "unlocked" ]]; then
@@ -201,17 +205,16 @@ bwjq_lock() {
 
 bwjq_display() {
   local -a \
-        carg \
-        qrarg
+        opt_clip \
+        opt_qr
 
   zparseopts -D -F -K -- \
-             {n,-newline}=narg \
-             {c,-clipboard}=carg \
-             {q,-qrcode}=qrarg || return
+             {c,-clipboard}=opt_clip \
+             {q,-qrcode}=opt_qr || return
 
-  if [[ ${#qrarg} -ne 0 ]]; then
-    qrencode -t UTF8
-  elif [[ ${#carg} -ne 0 ]]; then
+  if [[ ${#opt_qr} -ne 0 ]]; then
+    bwjq_qrencode
+  elif [[ ${#opt_clip} -ne 0 ]]; then
     bwjq_copy
     { sleep 45 && printf '' | bwjq_copy 2>&1; } &!
     echo "Copied to clipboard. Will clear in 45 seconds"
@@ -221,27 +224,34 @@ bwjq_display() {
 }
 
 bwjq_generate() {
-  local -a carg qrarg larg uarg sarg narg lengtharg
+  local -a \
+        opt_clip \
+        opt_qr \
+        opt_lower \
+        opt_upper \
+        opt_special \
+        opt_num \
+        opt_len
   zparseopts -D -F -K -- \
-             {c,-clipboard}=carg \
-             {q,-qrcode}=qrarg \
-             {l,-lowercase}=larg \
-             {u,-uppercase}=uarg \
-             {s,-special}=sarg \
-             {n,-number}=narg \
-             -length:=lengtharg || return
+             {c,-clipboard}=opt_clip \
+             {q,-qrcode}=opt_qr \
+             {l,-lowercase}=opt_lower \
+             {u,-uppercase}=opt_upper \
+             {s,-special}=opt_special \
+             {n,-number}=opt_num \
+             -length:=opt_len || return
 
   bwjq_unlock || return $?
 
   local -a param_list
-  (( ${#larg[@]})) && param_list+=( "lowercase" "true" )
-  (( ${#uarg[@]})) && param_list+=( "uppercase" "true" )
-  (( ${#sarg[@]})) && param_list+=( "special" "true" )
-  (( ${#narg[@]})) && param_list+=( "number" "true" )
-  (( ${#lengtharg[@]})) && param_list+=( "length" "${lengtharg[-1]}" )
+  (( ${#opt_lower[@]})) && param_list+=( "lowercase" "true" )
+  (( ${#opt_upper[@]})) && param_list+=( "uppercase" "true" )
+  (( ${#opt_special[@]})) && param_list+=( "special" "true" )
+  (( ${#opt_num[@]})) && param_list+=( "number" "true" )
+  (( ${#opt_len[@]})) && param_list+=( "length" "${opt_len[-1]}" )
 
   bwjq_request_path -r GET "/generate$params" .data.data "${param_list[@]}" \
-  | sed 's/.$//' | bwjq_display "${carg[@]}" "${qrarg[@]}"
+  | sed 's/.$//' | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
 }
 
 bwjq_init_file() {
@@ -260,6 +270,3 @@ bwjq_edit_file() {
     return 1
   fi
 }
-
-export BWJQ_JQ='jq'
-export BWJQ_COPY='cat | clipcopy'
