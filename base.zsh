@@ -216,7 +216,7 @@ bwjq_display() {
     bwjq_qrencode
   elif [[ ${#opt_clip} -ne 0 ]]; then
     bwjq_copy
-    { sleep 45 && printf '' | bwjq_copy 2>&1; } &!
+    # { sleep 45 && printf '' | bwjq_copy 2>&1; } &!
     echo "Copied to clipboard. Will clear in 45 seconds"
   else
     cat
