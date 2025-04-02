@@ -2,6 +2,14 @@
 This plugin provides jq scripts to manage a
 [bitwarden](https://github.com/bitwarden/cli) session.
 
+## Purpose
+
+This tool uses pure ZSH and JQ scripting to get values from bitwarden through a simple and usable interface. It can be used like the familiar standard unix password manager `pass`, which is very good but does not have the same cross platform compatibility as bitwarden.
+
+Folders, vault item names and then their templates are nested into one folder hierarchy, so it can be used like `bwjq myfolder/myitem/login/password`. At the moment bwjq supports listing the store tree under a given path, autocompletions and searching store paths from the fuzzy finder using `fzf`. It should be much faster than bitwarden CLI because it makes RESTful API calls to the local express web server launched by bw serve, which seems to noticeably reduce overhead from launching their node js app every time.
+
+If there is interest I can add additional features. Contributions and feedback are welcome.
+
 ## Installation
 
 See [INSTALL.md](INSTALL.md).
@@ -43,3 +51,9 @@ All the jq functions used are in `bwjq_utils.jq`. If you want to experiment with
 | `read_folder_map`            | maps folder ids to names            |
 | `subfolders`                 | given folder map extract subfolders |
 | `read_items_from_folder_map` | use folder map extract items        |
+
+## Related
+
+[bw](https://bitwarden.com/help/cli/)
+[bw serve](https://bitwarden.com/help/bitwarden-apis/#vault-management-api)
+[jq](https://jqlang.org/manual/)
