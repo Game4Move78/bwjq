@@ -29,7 +29,7 @@ See [INSTALL.md](INSTALL.md).
 | `bwjq -c PATH`       | copy value to clipboard |            |
 | `bwjq -q PATH`       | print value as QR code  | `qrencode` |
 
-Paths correspond to folder, followed by item followed by the path. So the password in item "myitem" in folder "myfolder" can be shown using `bwjq myfolder/myitem/login/password`. Autocompletions are supported for paths.
+Paths correspond to folder, followed by item followed by the path. So the password in item "myitem" in folder "myfolder" can be shown using `bwjq myfolder/myitem/login/password`. Items without a folder are prefixed by `/`. Autocompletions are supported for paths.
 
 ## Customization
 
