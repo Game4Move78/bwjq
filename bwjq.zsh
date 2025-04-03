@@ -67,7 +67,7 @@ bwjq_candidates() {
     --arg prefix "$prefix"
 }
 
-_bwjq_bwjq() {
+_bwjq() {
   local cur
   cur="${words[CURRENT]}"
   local -a opts
@@ -85,7 +85,7 @@ bwjq_fzf() {
   | cut -f2
 }
 
-bwjq_bwjq() {
+bwjq() {
   local -a \
         opt_clip \
         opt_qr \
@@ -118,33 +118,9 @@ bwjq_bwjq() {
 
 }
 
-bwjq_list() {
-  local -a \
-        opt_clip \
-        opt_qr
+compdef _bwjq bwjq
 
-  zparseopts -D -K -E -- \
-             {c,-clip}=opt_clip \
-             {q,-qr}=opt_qr \
-    || return
-
-  prefix="$1"
-
-  bwjq_unlock || return $?
-
-  bwjq_script \
-    "${BWJQ_LIST}" \
-    -r \
-    --arg prefix "$prefix" \
-  | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
-
-}
-
-compdef _bwjq_bwjq bwjq_bwjq
-compdef _bwjq_bwjq bwjq_list
-
-alias bwjq='bwjq_bwjq'
-alias bwls='bwjq_list'
+alias bwjq='bwjq'
 alias bwst='bwjq_status'
 alias bwsn='bwjq_sync'
 alias bwul='bwjq_unlock'
@@ -152,8 +128,7 @@ alias bwlk='bwjq_lock'
 alias bwgp='bwjq_generate -ulns'
 alias bwgu='bwjq_generate -uln'
 
-export BWJQ_BWJQ="${0:h}/bwjq_new.jq"
-export BWJQ_LIST="${0:h}/bwjq_list.jq"
+export BWJQ_BWJQ="${0:h}/bwjq.jq"
 export BWJQ_PATH="${0:h}"
 
 export BWJQ_JQ='jq'
