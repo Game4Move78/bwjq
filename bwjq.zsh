@@ -120,7 +120,6 @@ bwjq() {
 
 compdef _bwjq bwjq
 
-alias bwjq='bwjq'
 alias bwst='bwjq_status'
 alias bwsn='bwjq_sync'
 alias bwul='bwjq_unlock'
