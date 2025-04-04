@@ -91,10 +91,25 @@ def read_items:
   )
 ;
 
-def prefixed_path($prefix; $prefix_name; $recursive; $expand; $greedy):
-  ($prefix | sub("/[^/]*$"; "/") | select($expand or startswith($prefix_name))) as $prefix_path
-  | path_numeric($prefix | ltrimstr($prefix_name) | split("/")) as $path
-  | select($recursive or $prefix + "/" != $prefix_name)
+def prefixed_path($prefix; $folder; $name; $recursive; $expand; $greedy):
+  ($folder + $name) as $prefix_name
+  | (
+    $prefix
+    | sub("/[^/]*$"; "/")
+    | select(
+      $expand
+      or startswith($prefix_name)
+    )
+  ) as $prefix_path
+  | path_numeric(
+    $prefix
+    | ltrimstr($prefix_name)
+    | split("/")
+  ) as $path
+  | select(
+     $recursive
+     or $prefix + "/" != $prefix_name
+  )
   | (
     if $greedy then
       getscalar($path)
@@ -149,29 +164,33 @@ def read_folder_map($prefix; $recursive):
   folders_map([read_folders | prefixed_folder($prefix; $recursive)])
 ;
 
+def subitems($prefix; $folder; $name):
+  $folder + $name
+  | . as $prefix_name
+  | select(
+    startswith($prefix)
+    and $prefix != $prefix_name
+  )
+  | [.]
+;
+
 def read_items_from_folder_map($prefix; $recursive; $expand; $greedy):
   . as $folders
   | read_items
   | prefixed_item($prefix; $folders; $recursive) as [$folder, $name, $item]
   | ($folder + $name) as $prefix_name
-  | (
-    $prefix_name
-    | select(
-        startswith($prefix)
-        and $prefix != $prefix_name
-    )
-    | [.]
-  ), (
-    $item | prefixed_path($prefix; $prefix_name; $recursive; $expand; $greedy)
-  )
+  | subitems($prefix; $folder; $name), (
+  $item
+  | prefixed_path($prefix; $folder; $name; $recursive; $expand; $greedy)
+)
 ;
 
 def subfolders($prefix; $recursive):
   flatten
   | .[]
-  |  select(startswith($prefix) and . != $prefix)
+  | select(startswith($prefix) and . != $prefix)
   | if $recursive == false then
       select(ltrimstr($prefix) | gsub("[^/]";"") | length <= 1)
     end
-  | [.]
+| [.]
 ;
