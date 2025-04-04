@@ -38,7 +38,7 @@ Paths correspond to folder, followed by item followed by the path. So the passwo
 | `BWJQ_JQ`         | jq command           | `jq`, `gojq`        |
 | `BWJQ_BWJQ`     | jq script for `bwjq` | `./bwjq_new.jq`     |
 | `BWJQ_COPY`     | clipboard command    | `clipcopy`, `xclip` |
-| `BWJQ_QRENCODE` | qrencode command     | `./bwjq_new.jq`     |
+| `BWJQ_QRENCODE` | qrencode command     | `qrencode -t UTF8`  |
 
 ## Development
 
