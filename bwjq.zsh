@@ -44,11 +44,12 @@ bwjq_script() {
   cat \
     <(bwjq_request GET '/list/object/folders') \
     <(bwjq_request GET '/list/object/items') \
-    | bwjq_jq ${bwjq_args[@]} -L $BWJQ_PATH \
-              -nceM \
-              --stream \
-              -f "$script" \
-              "$@"
+    | bwjq_jq \
+        -nceM \
+        --stream \
+        -f "$script" \
+        "$@" \
+        ${bwjq_args[@]} -L $BWJQ_PATH
 }
 
 bwjq_candidates() {
@@ -73,16 +74,18 @@ bwjq_candidates() {
   bwjq_unlock || return $?
 
   prefix="$1"
+  [[ $# -ne 0 ]] && shift
   bwjq_script \
     "${BWJQ_BWJQ}" \
     -r \
-    "${opt_custom[@]}" \
     --arg key "${opt_key[1]}" \
     --arg greedy "${opt_greedy[1]}" \
     --arg recursive "${opt_recursive[1]}" \
     --arg expand "${opt_exp[1]}" \
     --arg all "${opt_all[1]}" \
-    --arg prefix "$prefix"
+    --arg prefix "$prefix" \
+    "${opt_custom[@]}" \
+    "$@"
 }
 
 _bwjq() {
@@ -126,11 +129,11 @@ bwjq() {
     local key
     read -r key
     if [[ "$key" == "value" ]]; then
-      bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
+      perl -pe 'chomp if eof' | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
     elif [[ "$key" == "tree" ]]; then
       tree --fromfile --noreport .
     elif [[ "$key" == "tsv" ]]; then
-      bwjq_fzf | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
+      bwjq_fzf | perl -pe 'chomp if eof' | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
     fi
   }
 

@@ -251,7 +251,7 @@ bwjq_generate() {
   (( ${#opt_len[@]})) && param_list+=( "length" "${opt_len[-1]}" )
 
   bwjq_request_path -r GET "/generate$params" .data.data "${param_list[@]}" \
-  | sed 's/.$//' | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
+  | perl -pe 'chomp if eof' | bwjq_display "${opt_clip[@]}" "${opt_qr[@]}"
 }
 
 bwjq_init_file() {
