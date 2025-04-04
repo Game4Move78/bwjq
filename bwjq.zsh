@@ -24,16 +24,31 @@
 source "${0:h}/base.zsh"
 
 bwjq_script() {
+  local -a \
+        opt_custom
+
+  zparseopts -D -K -E -- \
+             -custom:=opt_custom \
+    || return
+
+  local -a bwjq_args
+
+  if [[ ${#opt_custom} -ne 0 ]]; then
+    bwjq_args+=(-L ${opt_custom[-1]})
+  else
+    bwjq_args+=(-L $BWJQ_CUSTOM)
+  fi
+
   local script="$1"
   shift
   cat \
     <(bwjq_request GET '/list/object/folders') \
     <(bwjq_request GET '/list/object/items') \
-    | bwjq_jq -L $BWJQ_PATH \
-        -nceM \
-        --stream \
-        -f "$script" \
-        "$@"
+    | bwjq_jq ${bwjq_args[@]} -L $BWJQ_PATH \
+              -nceM \
+              --stream \
+              -f "$script" \
+              "$@"
 }
 
 bwjq_candidates() {
@@ -43,15 +58,17 @@ bwjq_candidates() {
         opt_greedy \
         opt_recursive \
         opt_exp \
-        opt_all \
+        opt_custom \
+        opt_all
 
-        zparseopts -D -K -E -- \
-          {k,-key}=opt_key \
-          {g,-greedy}=opt_greedy \
-          {r,-recursive}=opt_recursive \
-          {e,-expand}=opt_exp \
-          {a,-all}=opt_all \
-          || return
+  zparseopts -D -K -E -- \
+             {k,-key}=opt_key \
+             {g,-greedy}=opt_greedy \
+             {r,-recursive}=opt_recursive \
+             {e,-expand}=opt_exp \
+             {a,-all}=opt_all \
+             -custom:=opt_custom \
+  || return
 
   bwjq_unlock || return $?
 
@@ -59,6 +76,7 @@ bwjq_candidates() {
   bwjq_script \
     "${BWJQ_BWJQ}" \
     -r \
+    "${opt_custom[@]}" \
     --arg key "${opt_key[1]}" \
     --arg greedy "${opt_greedy[1]}" \
     --arg recursive "${opt_recursive[1]}" \
@@ -95,7 +113,7 @@ bwjq() {
              {c,-clip}=opt_clip \
              {q,-qr}=opt_qr \
              {f,-fzf}=opt_fzf \
-    || return
+  || return
 
   local -a bwjq_args
 
@@ -128,7 +146,9 @@ alias bwgp='bwjq_generate -ulns'
 alias bwgu='bwjq_generate -uln'
 
 export BWJQ_BWJQ="${0:h}/bwjq.jq"
+
 export BWJQ_PATH="${0:h}"
+export BWJQ_CUSTOM="${0:h}/custom"
 
 export BWJQ_JQ='jq'
 export BWJQ_QRENCODE='qrencode -t UTF8'

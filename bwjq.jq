@@ -1,11 +1,19 @@
 import "bwjq_utils" as utils;
+import "bwjq_custom" as custom;
 
 [$recursive != "", $expand != "", $greedy != "", $key != "", $all != ""] as [$recursive, $expand, $greedy, $key, $all]
-| (
-  foreach (
-      utils::read_folder_map($prefix; $recursive)
-      | (utils::subfolders($prefix; $recursive)
-         , utils::read_items_from_folder_map($prefix; $recursive; $expand; $greedy), null)
+  | (
+    foreach (
+        utils::read_folder_map($prefix; $recursive)
+        | (
+          utils::subfolders($prefix; $recursive),
+          (
+            utils::read_items_from_folder_map($prefix; $recursive)
+                 as [$folder, $name, $item]
+            | ($item | custom::filter_item | select(. != null)) as $item
+          | utils::subitems_and_subpaths($folder; $name; $item; $recursive; $expand; $greedy)
+        )
+        , null)
   ) as $item (
     [null, null];
     [$item, .[0], .[1]];

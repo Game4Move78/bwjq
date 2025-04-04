@@ -75,6 +75,8 @@ def prefixed_item($prefix; $folders; $recursive):
     | if endswith("/") then . else . + "/" end
     | sub("/[^/]*$"; "/")
   ) as $item_name
+  # | custom::filter_item
+  # | select(. != null)
   | . as $item
   | $folder_name + $item_name
   | prefixed_filter($prefix; $recursive)
@@ -95,21 +97,33 @@ def prefixed_path($prefix; $folder; $name; $recursive; $expand; $greedy):
   ($folder + $name) as $prefix_name
   | (
     $prefix
-    | sub("/[^/]*$"; "/")
-    | select(
-      $expand
-      or startswith($prefix_name)
+    | (
+      if startswith($prefix_name) then
+        [
+          (
+            sub("/[^/]*$"; "/")
+          ),(
+            ltrimstr($prefix_name)
+            | split("/")
+          )
+        ]
+      else
+        select($expand)
+        | [
+          (
+            $prefix_name
+          ),
+          (
+            []
+          )
+        ]
+      end
     )
-  ) as $prefix_path
-  | path_numeric(
-    $prefix
-    | ltrimstr($prefix_name)
-    | split("/")
-  ) as $path
+  ) as [$prefix_path, $path]
   | select(
-     $recursive
-     or $prefix + "/" != $prefix_name
-  )
+        $recursive
+          or $prefix + "/" != $prefix_name
+      )
   | (
     if $greedy then
       getscalar($path)
@@ -174,15 +188,17 @@ def subitems($prefix; $folder; $name):
   | [.]
 ;
 
-def read_items_from_folder_map($prefix; $recursive; $expand; $greedy):
+def read_items_from_folder_map($prefix; $recursive):
   . as $folders
   | read_items
-  | prefixed_item($prefix; $folders; $recursive) as [$folder, $name, $item]
-  | ($folder + $name) as $prefix_name
-  | subitems($prefix; $folder; $name), (
-  $item
-  | prefixed_path($prefix; $folder; $name; $recursive; $expand; $greedy)
-)
+  | prefixed_item($prefix; $folders; $recursive)
+;
+
+def subitems_and_subpaths($folder; $name; $item; $recursive; $expand; $greedy):
+  subitems($prefix; $folder; $name), (
+    $item
+    | prefixed_path($prefix; $folder; $name; $recursive; $expand; $greedy)
+  )
 ;
 
 def subfolders($prefix; $recursive):
