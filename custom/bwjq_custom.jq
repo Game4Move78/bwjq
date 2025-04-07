@@ -3,7 +3,6 @@
 #   .
 # ;
 
-
 def filter_item:
   {
     id: .id,
@@ -12,5 +11,5 @@ def filter_item:
     username: .login.username,
     password: .login.password,
     fields: ((.fields | group_by(.name) | map({(.[0].name): map(.value)}) | add )? // {})
-  }
+  } + (.card) + (.sshKey)
 ;
