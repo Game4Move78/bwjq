@@ -54,7 +54,7 @@ All the jq functions used are in `bwjq_utils.jq`. If you want to experiment with
 
 ## Limitations
 
-At the moment the argument parsing is basic and uses zparseopts. Flags such as `-q` and `-f` can be written as `-q -f` but not `-q`. Search terms can be provided to fzf finder, but have not yet been implemented for command line arguments.
+At the moment the argument parsing is basic and uses zparseopts. Flags such as `-q` and `-f` can be written as `-q -f` but not `-q`. Search terms can be provided to fzf finder, but have not yet been implemented for multiple command line arguments.
 
 ## Related
 
