@@ -16,18 +16,18 @@ See [INSTALL.md](INSTALL.md).
 
 ## Usage
 
-| Command              | Description             | Deps       |
-|----------------------|-------------------------|------------|
-| `bwul`               | unlock the vault        |            |
-| `bwlk`               | lock the vault          |            |
-| `bwst`               | vault status            |            |
-| `bwsn`               | sync the vault          |            |
-| `bwgu`               | generate username       |            |
-| `bwgp`               | generate password       |            |
-| `bwjq PATH`          | show value              |            |
-| `bwjq -f PATH`       | search values           | `fzf`      |
-| `bwjq -c PATH`       | copy value to clipboard |            |
-| `bwjq -q PATH`       | print value as QR code  | `qrencode` |
+| Command        | Description             | Notes           |
+|----------------|-------------------------|-----------------|
+| `bwul`         | unlock the vault        |                 |
+| `bwlk`         | lock the vault          |                 |
+| `bwst`         | vault status            |                 |
+| `bwsn`         | sync the vault          |                 |
+| `bwgu`         | generate username       |                 |
+| `bwgp`         | generate password       |                 |
+| `bwjq PATH`    | show value              |                 |
+| `bwjq -f PATH` | search values           | Uses `fzf`      |
+| `bwjq -c PATH` | copy value to clipboard | Uses `clipcopy` |
+| `bwjq -q PATH` | print value as QR code  | Uses `qrencode` |
 
 Paths correspond to folder, followed by item followed by the path. So the password in item "myitem" in folder "myfolder" can be shown using `bwjq myfolder/myitem/login/password`. Items without a folder are prefixed by `/`. Autocompletions are supported for paths.
 
@@ -51,6 +51,10 @@ All the jq functions used are in `bwjq_utils.jq`. If you want to experiment with
 | `read_folder_map`            | maps folder ids to names            |
 | `subfolders`                 | given folder map extract subfolders |
 | `read_items_from_folder_map` | use folder map extract items        |
+
+## Limitations
+
+At the moment the argument parsing is basic and uses zparseopts. Flags such as `-q` and `-f` can be written as `-q -f` but not `-q`. Search terms can be provided to fzf finder, but have not yet been implemented for command line arguments.
 
 ## Related
 
