@@ -118,7 +118,7 @@ bwjq_status() {
 
 bwjq_sync() {
   local res
-  bwjq_request_path -r POST '/sync' '.title'
+  bwjq_request_path -r POST '/sync' '.data.title'
 }
 
 bwjq_wait_port() {
