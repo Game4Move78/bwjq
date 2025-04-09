@@ -2,8 +2,8 @@ def is_scalar:
   type != "object" and type != "array" and type != "null"
 ;
 
-def path_numeric($path):
-  $path | map(if test("^[0-9]+$") then tonumber else . end)
+def path_numeric:
+  map(if test("^[0-9]+$") then tonumber else . end)
 ;
 
 def getscalar($path):
@@ -105,6 +105,7 @@ def prefixed_path($prefix; $folder; $name; $recursive; $expand; $greedy):
           ),(
             ltrimstr($prefix_name)
             | split("/")
+            | path_numeric
           )
         ]
       else
