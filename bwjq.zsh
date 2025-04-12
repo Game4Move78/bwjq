@@ -99,7 +99,7 @@ _bwjq() {
   opts=("${(@f)$(bwjq_candidates ${(Q)cur})}")
   local prefix="${(Q)cur%[^\/]}"
 
-  values=("${(@)opts/#${prefix}/}")
+  values=("${(@)opts#${prefix}}")
   values=("${(@I:2:)values//([^\/]#\/|[^\/]##)/}")
 
   compadd -S '' -d values -a opts
