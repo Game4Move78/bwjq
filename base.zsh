@@ -142,19 +142,21 @@ bwjq_serve() {
 bwjq_request_password() {
   printf "SETTITLE Password Prompt\nSETPROMPT Enter your password:\nGETPIN\n" \
   | pinentry \
-  | awk -F' ' '/^D / { print substr($0, 3) }'
-  echo $?
+  | awk '
+  BEGIN { found = 0 }
+  /^D / { print substr($0, 3); found = 1 }
+  END { if (!found) exit 1 }
+  '
 }
 
 bwjq_unlock_password() {
-  local pass
-  pass=$(bwjq_request_password) || return $?
-  echo "$pass"
   {
+    local pass
+    pass="$(</dev/stdin)"
     printf '{"password":"%s"}' "$pass" \
-      | bwjq_request_path -r --stdin POST /unlock .data.title
-    _bwjq_pipefail ${pipestatus[@]}
+    | bwjq_request_path -r --stdin POST /unlock .data.title
   } 2> /dev/null
+
 }
 
 bwjq_unlock() {
@@ -167,7 +169,10 @@ bwjq_unlock() {
 
   local pass
 
-  while ! bwjq_unlock_password; do
+  while true; do
+    pass=$(bwjq_request_password) || return $?
+    printf "%s" "$pass" | bwjq_unlock_password
+    [[ $? -eq 0 ]] && return
   done
 
 }
