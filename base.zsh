@@ -139,29 +139,22 @@ bwjq_serve() {
   fi
 }
 
-bwjq_encrypt() {
-  if [ -z "${BWJQ_GPG_KEY}" ]; then
-    args=("--default-recipient-self")
-  else
-    args=("--recipient" "${BWJQ_GPG_KEY}")
-  fi
-  gpg --quiet --batch --yes --default-recipient-self --encrypt -o $@
-}
-
-bwjq_decrypt() {
-  gpg --quiet --batch --yes --decrypt $@
+bwjq_request_password() {
+  printf "SETTITLE Password Prompt\nSETPROMPT Enter your password:\nGETPIN\n" \
+  | pinentry \
+  | awk -F' ' '/^D / { print substr($0, 3) }'
+  echo $?
 }
 
 bwjq_unlock_password() {
-  if [ ! -f ${gpg_file} ]; then
-    return 1
-  fi
-  local res=$(bwjq_decrypt $1 \
-  | {
-    awk '{print "{\"password\":\"" $0 "\"}"}' \
-    | bwjq_request_path -r --stdin POST /unlock .data.title
-  } 2> /dev/null)
-  _bwjq_pipefail ${pipestatus[@]} || printf "%s\n" "$res"
+  local pass
+  pass=$(bwjq_request_password) || return $?
+  echo "$pass"
+  {
+    printf '{"password":"%s"}' "$pass" \
+      | bwjq_request_path -r --stdin POST /unlock .data.title
+    _bwjq_pipefail ${pipestatus[@]}
+  } 2> /dev/null
 }
 
 bwjq_unlock() {
@@ -173,19 +166,8 @@ bwjq_unlock() {
   fi
 
   local pass
-  local gpg_file
 
-  gpg_file=${BWJQ_PASS_FILE:-~/.config/zsh-bitwarden/pass.gpg}
-  mkdir -p $(dirname $gpg_file)
-
-  while ! bwjq_unlock_password $gpg_file; do
-    echo -n "Enter your master password: " >&2
-    if ! read -s pass; then
-      return 1
-    fi
-    if ! printf "%s" "$pass" | bwjq_encrypt ${gpg_file}; then
-      return 1
-    fi
+  while ! bwjq_unlock_password; do
   done
 
 }

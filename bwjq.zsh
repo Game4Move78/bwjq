@@ -89,12 +89,21 @@ bwjq_candidates() {
 }
 
 _bwjq() {
+
+  setopt local_options EXTENDED_GLOB
+
   local cur
   cur="${words[CURRENT]}"
   local -a opts
 
   opts=("${(@f)$(bwjq_candidates ${(Q)cur})}")
-  compadd -S '' -- "${opts[@]}"
+  local prefix="${(Q)cur%[^\/]}"
+
+  values=("${(@)opts/#${prefix}/}")
+  values=("${(@I:2:)values//([^\/]#\/|[^\/]##)/}")
+
+  compadd -S '' -d values -a opts
+
 }
 
 bwjq_fzf() {
