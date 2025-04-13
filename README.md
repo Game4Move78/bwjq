@@ -58,6 +58,10 @@ At the moment the argument parsing is basic and uses zparseopts. Flags such as `
 
     Parent folders must be created for autocomplete to work.
 
+## Security
+
+No passwords are stored anywhere except in the official bitwarden CLI. When the vault is unlocked, the express web server is open to all apps and answers requests over HTTP on the local machine. To fix this default setting in Bitwarden, perform the steps in [./bw-serve-encrypted/](bw-serve-encrypted) and add `export SSL_CERT_FILE="$PWD/root.crt`, `export BWJQ_USER="USER:PASS"` and `export BWJQ_SERVE_PORT="8080"` substituting for your Caddy username and password.
+
 ## Related
 
 [bw](https://bitwarden.com/help/cli/)

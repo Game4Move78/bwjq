@@ -84,9 +84,19 @@ bwjq_request() {
     data_args+=("-d" "$(</dev/stdin)")
   fi
 
+  local -a curl_args
+
+  if [[ -n ${BWJQ_USER} ]]; then
+    curl_args+=("-u" "$BWJQ_USER")
+  fi
+
+  if [[ -n ${BWJQ_CACERT} ]]; then
+    curl_args+=("--cacert" "$BWJQ_CACERT")
+  fi
+
   local serve_port=${BWJQ_SERVE_PORT:-8087}
 
-  curl -sX "$method" "http://localhost:${serve_port}$endpoint$params" -H 'accept: application/json' -H 'Content-Type: application/json' "${data_args[@]}"
+  curl "${curl_args[@]}" -sX "$method" "http://localhost:${serve_port}$endpoint$params" -H 'accept: application/json' -H 'Content-Type: application/json' "${data_args[@]}"
 
 }
 

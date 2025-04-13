@@ -1,0 +1,3 @@
+[submodule "bw-serve-encrypted"]
+	path = bw-serve-encrypted
+	url = https://github.com/Game4Move78/bw-serve-encrypted
