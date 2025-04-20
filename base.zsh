@@ -94,9 +94,18 @@ bwjq_request() {
     curl_args+=("--cacert" "$BWJQ_CACERT")
   fi
 
-  local serve_port=${BWJQ_SERVE_PORT:-8087}
+  local hostname
 
-  curl "${curl_args[@]}" -sX "$method" "http://localhost:${serve_port}$endpoint$params" -H 'accept: application/json' -H 'Content-Type: application/json' "${data_args[@]}"
+  if [[ -n ${BWJQ_SOCK} ]]; then
+    curl_args+=("--unix-socket" "${BWJQ_SOCK}")
+    hostname="http://localhost"
+  else
+    local host="${BWJQ_HOST:-http://localhost}"
+    local port="${BWJQ_PORT:-8087}"
+    hostname="$host:$port"
+  fi
+
+  curl "${curl_args[@]}" -sX "$method" "$hostname$endpoint$params" -H 'accept: application/json' -H 'Content-Type: application/json' "${data_args[@]}"
 
 }
 
@@ -112,6 +121,10 @@ bwjq_request_path() {
   bwjq_request "${opt_stdin[@]}" "$method" "$endpoint" "${params_list[@]}" \
   | bwjq_jq "${opt_raw[@]}" -ceM "$jqpath"
   _bwjq_pipefail ${pipestatus[@]} || return $?
+}
+
+bwjq_test_serve() {
+  bwjq_request GET '/status' > /dev/null 2> /dev/null
 }
 
 bwjq_status() {
@@ -131,22 +144,29 @@ bwjq_sync() {
   bwjq_request_path -r POST '/sync' '.data.title'
 }
 
-bwjq_wait_port() {
-  local port limit
-  port=$1
+bwjq_wait_serve() {
+  local limit
   limit=$2
-  while ! nc -z localhost $port && [[ $limit -ne 0 ]]; do
+  while ! bwjq_test_serve; do
         sleep 1
         limit=$((limit-1))
   done
 }
 
 bwjq_serve() {
-  local serve_port=${BWJQ_SERVE_PORT:-8087}
-  if ! pgrep -af "bw serve" > /dev/null 2>&1; then
-    bw serve --port ${serve_port} > /dev/null 2> /dev/null &!
-    bwjq_wait_port ${serve_port} 5
+  if bwjq_test_serve; then
+    return
   fi
+  local -a serve_args
+  if [[ -n $BWJQ_SOCK ]]; then
+    serve_args+=("unix://${BWJQ_SOCK}")
+  else
+    local host=${BWJQ_HOST:-http://localhost}
+    local port=${BWJQ_PORT:-8087}
+    serve_args+=("$host" --port "$port")
+  fi
+  bw serve "${serve_args[@]}" ${serve_port} > /dev/null 2> /dev/null &!
+  bwjq_wait_serve ${serve_port} 5
 }
 
 bwjq_request_password() {
